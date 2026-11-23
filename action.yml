@@ -1,0 +1,51 @@
+name: Weft
+description: Check Weft contracts for breaking changes, stale generated code and formatting
+author: weft-sdk
+branding:
+  icon: git-merge
+  color: blue
+
+inputs:
+  version:
+    description: The weft version to install, like `v0.1.0`, or `latest`
+    default: latest
+  working-directory:
+    description: The folder that holds weft.yaml
+    default: "."
+  check:
+    description: Run `weft check`, which compares the contracts with the last release and fails on breaking changes the version does not cover
+    default: "true"
+  baseline:
+    description: Compare with this git ref (a tag, branch or commit). Default is the latest tag
+    default: ""
+  gen-check:
+    description: Run `weft gen --check`, which fails when the generated code is out of date
+    default: "true"
+  fmt-check:
+    description: Run `weft fmt --check`, which fails when a contract is not formatted
+    default: "true"
+
+outputs:
+  passes:
+    description: "`true` when every check that ran passed"
+    value: ${{ steps.run.outputs.passes }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install weft
+      shell: bash
+      env:
+        WEFT_VERSION: ${{ inputs.version }}
+      run: bash "${{ github.action_path }}/scripts/install.sh"
+
+    - name: Check contracts
+      id: run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        INPUT_CHECK: ${{ inputs.check }}
+        INPUT_BASELINE: ${{ inputs.baseline }}
+        INPUT_GEN_CHECK: ${{ inputs.gen-check }}
+        INPUT_FMT_CHECK: ${{ inputs.fmt-check }}
+      run: bash "${{ github.action_path }}/scripts/run.sh"

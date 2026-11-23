@@ -1,0 +1,46 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fixture:
+    name: the action passes on a clean project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: weft
+        uses: ./
+        with:
+          working-directory: test/fixture
+      - name: The output says it passed
+        run: test "${{ steps.weft.outputs.passes }}" = "true"
+
+  stale-code-fails:
+    name: the action fails on stale generated code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make the generated file stale
+        run: echo "// stale" >> test/fixture/src/weft.gen.ts
+      - id: weft
+        uses: ./
+        continue-on-error: true
+        with:
+          working-directory: test/fixture
+      - name: The step failed, and the output says so
+        run: |
+          test "${{ steps.weft.outcome }}" = "failure"
+          test "${{ steps.weft.outputs.passes }}" = "false"

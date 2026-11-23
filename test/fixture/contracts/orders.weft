@@ -1,0 +1,37 @@
+package orders @version("1.0.0")
+
+enum Currency { EUR GBP USD }
+
+type Money {
+  amount: int  // minor units (cents)
+  currency: Currency
+}
+
+type OrderItem {
+  sku: string
+  qty: int
+}
+
+/// An order placed by a customer.
+type Order {
+  id: uuid
+  customerId: string
+  items: OrderItem[]
+  total: Money
+  placedAt: timestamp
+}
+
+type CreateOrder {
+  customerId: string
+  items: OrderItem[]
+}
+
+/// Sent through Kafka when an order is placed.
+event order.placed: Order {
+  key: id
+}
+
+http /v1 {
+  POST "/orders"       createOrder(body: CreateOrder) -> Order
+  GET  "/orders/{id}"  getOrder(id: uuid) -> Order?
+}

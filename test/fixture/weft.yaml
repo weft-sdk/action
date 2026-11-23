@@ -1,0 +1,13 @@
+service: orders
+language: typescript
+
+contracts:
+  - ./contracts
+
+codegen:
+  out: src/weft.gen.ts
+
+transports:
+  http:
+    library: express
+    port: 3000
